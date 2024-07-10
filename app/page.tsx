@@ -1,15 +1,15 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Box, VStack, Heading, Button } from '@chakra-ui/react'
-import Calendar from '../components/Calendar'
-import EventForm from '../components/EventForm'
-import { getEvents, addEvent } from '../lib/firebase'
-import { Event } from '../types/index'
+import { Box, VStack, Heading, Button, useDisclosure } from '@chakra-ui/react'
+import Calendar from '@/components/Calendar'
+import EventForm from '@/components/EventForm'
+import { getEvents, addEvent } from '@/lib/firebase'
+import { Event } from '@/types'
 
 export default function Home() {
   const [events, setEvents] = useState<Event[]>([])
-  const [isAddingEvent, setIsAddingEvent] = useState(false)
+  const { isOpen, onOpen, onClose } = useDisclosure()
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -20,22 +20,24 @@ export default function Home() {
   }, [])
 
   const handleAddEvent = async (newEvent: Omit<Event, 'id'>) => {
-    const addedEvent = await addEvent(newEvent)
-    setEvents([...events, addedEvent])
-    setIsAddingEvent(false)
+    try {
+      const addedEvent = await addEvent(newEvent)
+      setEvents(prevEvents => [...prevEvents, addedEvent])
+      onClose()
+    } catch (error) {
+      console.error("Failed to add event:", error)
+    }
   }
 
   return (
     <Box maxWidth="1200px" margin="auto" padding={8}>
       <VStack spacing={8}>
         <Heading>共有スケジュール</Heading>
-        <Button onClick={() => setIsAddingEvent(true)} colorScheme="teal">
+        <Button onClick={onOpen} colorScheme="teal">
           新しいイベントを追加
         </Button>
         <Calendar events={events} />
-        {isAddingEvent && (
-          <EventForm onSubmit={handleAddEvent} onCancel={() => setIsAddingEvent(false)} />
-        )}
+        <EventForm isOpen={isOpen} onClose={onClose} onSubmit={handleAddEvent} />
       </VStack>
     </Box>
   )
