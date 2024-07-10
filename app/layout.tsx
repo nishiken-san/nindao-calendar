@@ -1,10 +1,5 @@
-import './globals.css'
-import type { Metadata } from 'next'
 
-export const metadata: Metadata = {
-  title: 'にんだおカレンダー',
-  description: 'みんなの予定が一目で確認できるカレンダー',
-}
+import { Providers } from './providers'
 
 export default function RootLayout({
   children,
@@ -13,7 +8,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ja">
-      <body>{children}</body>
+      <body>
+        <Providers>
+          {children}
+        </Providers>
+      </body>
     </html>
   )
 }

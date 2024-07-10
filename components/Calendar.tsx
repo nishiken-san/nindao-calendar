@@ -1,30 +1,30 @@
-'use client';
+'use client'
 
-import React from 'react';
-import { Calendar as BigCalendar, momentLocalizer } from 'react-big-calendar';
-import moment from 'moment';
-import 'react-big-calendar/lib/css/react-big-calendar.css';
-import { Event } from '../types';
-
-moment.locale('ja');
-const localizer = momentLocalizer(moment);
+import { Box, SimpleGrid, Text } from '@chakra-ui/react'
+import { Event } from '../types/index'
 
 interface CalendarProps {
-  events: Event[];
-  onSelectEvent: (event: Event) => void;
+  events: Event[]
 }
 
-const Calendar: React.FC<CalendarProps> = ({ events, onSelectEvent }) => {
-  return (
-    <BigCalendar
-      localizer={localizer}
-      events={events}
-      startAccessor="start"
-      endAccessor="end"
-      style={{ height: 500 }}
-      onSelectEvent={onSelectEvent}
-    />
-  );
-};
-
-export default Calendar;
+export default function Calendar({ events }: CalendarProps) {
+    const daysInMonth = 30
+    const days = Array.from({ length: daysInMonth }, (_, i) => i + 1)
+  
+    return (
+      <SimpleGrid columns={7} spacing={2} width="100%">
+        {days.map(day => (
+          <Box key={day} borderWidth={1} p={2} borderRadius="md">
+            <Text fontWeight="bold">{day}</Text>
+            {events
+              .filter(event => new Date(event.start).getDate() === day)
+              .map(event => (
+                <Text key={event.id} fontSize="sm" color="gray.600">
+                  {event.title}
+                </Text>
+              ))}
+          </Box>
+        ))}
+      </SimpleGrid>
+    )
+  }

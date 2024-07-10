@@ -1,57 +1,42 @@
-'use client';
+'use client'
 
-import React, { useState, useEffect } from 'react';
-import { ref, push, onValue, remove } from 'firebase/database';
-import { db } from '../lib/firebase';
-import Calendar from '../components/Calendar';
-import EventForm from '../components/EventForm';
-import { Event } from '../types';
+import { useState, useEffect } from 'react'
+import { Box, VStack, Heading, Button } from '@chakra-ui/react'
+import Calendar from '../components/Calendar'
+import EventForm from '../components/EventForm'
+import { getEvents, addEvent } from '../lib/firebase'
+import { Event } from '../types/index'
 
 export default function Home() {
-  const [events, setEvents] = useState<Event[]>([]);
+  const [events, setEvents] = useState<Event[]>([])
+  const [isAddingEvent, setIsAddingEvent] = useState(false)
 
   useEffect(() => {
-    const eventsRef = ref(db, 'events');
-    const unsubscribe = onValue(eventsRef, (snapshot) => {
-      const data = snapshot.val();
-      const loadedEvents: Event[] = [];
-      for (const key in data) {
-        loadedEvents.push({
-          id: key,
-          ...data[key],
-          start: new Date(data[key].start),
-          end: new Date(data[key].end),
-        });
-      }
-      setEvents(loadedEvents);
-    });
+    const fetchEvents = async () => {
+      const fetchedEvents = await getEvents()
+      setEvents(fetchedEvents)
+    }
+    fetchEvents()
+  }, [])
 
-    return () => unsubscribe();
-  }, []);
-
-  const handleAddEvent = (newEvent: Omit<Event, 'id'>) => {
-    console.log('Adding new event:', newEvent);
-    const eventsRef = ref(db, 'events');
-    push(eventsRef, newEvent);
-  };
-
-  const handleDeleteEvent = (eventId: string) => {
-    const eventRef = ref(db, `events/${eventId}`);
-    remove(eventRef);
-  };
+  const handleAddEvent = async (newEvent: Omit<Event, 'id'>) => {
+    const addedEvent = await addEvent(newEvent)
+    setEvents([...events, addedEvent])
+    setIsAddingEvent(false)
+  }
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">にんだおカレンダー</h1>
-      <EventForm onSubmit={handleAddEvent} />
-      <Calendar 
-        events={events} 
-        onSelectEvent={(event) => {
-          if (window.confirm(`${event.title}を削除しますか？`)) {
-            handleDeleteEvent(event.id);
-          }
-        }}
-      />
-    </div>
-  );
+    <Box maxWidth="1200px" margin="auto" padding={8}>
+      <VStack spacing={8}>
+        <Heading>共有スケジュール</Heading>
+        <Button onClick={() => setIsAddingEvent(true)} colorScheme="teal">
+          新しいイベントを追加
+        </Button>
+        <Calendar events={events} />
+        {isAddingEvent && (
+          <EventForm onSubmit={handleAddEvent} onCancel={() => setIsAddingEvent(false)} />
+        )}
+      </VStack>
+    </Box>
+  )
 }
